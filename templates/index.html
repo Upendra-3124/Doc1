@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}DocShare – Browse Files{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div>
+    <h1>Share your <em>docs</em><br>with the world.</h1>
+    <p>Upload PDFs &amp; presentations. No login needed — just pick a username and go.</p>
+  </div>
+  <a class="btn btn-primary" href="/upload" style="font-size:1rem;padding:.75rem 2rem;flex-shrink:0;">+ Upload File</a>
+</section>
+
+{% if users %}
+  {% for username, files in users.items() %}
+  <section class="user-section">
+    <div class="section-header">
+      <a href="/user/{{ username }}" style="text-decoration:none;display:flex;align-items:center;gap:.75rem;">
+        <span class="user-avatar">{{ username[0].upper() }}</span>
+        <h2>{{ username }}</h2>
+      </a>
+      <div class="divider"></div>
+      <span class="file-count">{{ files|length }} file{{ 's' if files|length != 1 }}</span>
+    </div>
+
+    <div class="cards-grid">
+      {% for f in files %}
+      <div class="file-card">
+        <div class="card-thumb" onclick="window.open('{{ f.file_url }}','_blank')">
+          {% if f.thumb_url %}
+            <img src="{{ f.thumb_url }}" alt="{{ f.title }}" loading="lazy">
+          {% else %}
+            <div class="card-thumb-placeholder">
+              <span class="file-type-icon">{% if f.file_type == 'pdf' %}📄{% else %}📊{% endif %}</span>
+            </div>
+          {% endif %}
+          <span class="card-badge badge-{{ f.file_type }}">{{ f.file_type }}</span>
+        </div>
+        <div class="card-body">
+          <div class="card-title">{{ f.title }}</div>
+          <div class="card-meta">by {{ f.username }} · {{ f.uploaded_at[:10] if f.uploaded_at else '' }}</div>
+          <div class="card-actions">
+            <a class="btn-card" href="{{ f.file_url }}" target="_blank" rel="noopener">View</a>
+            <a class="btn-card primary" href="{{ f.file_url }}" download>↓ Save</a>
+            <a class="btn-card edit" href="/file/{{ f.id }}/edit">✏</a>
+            <button class="btn-card del" onclick="confirmDelete('{{ f.id }}')">🗑</button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+
+{% else %}
+<div class="empty">
+  <div class="empty-icon">📂</div>
+  <h3>Nothing here yet</h3>
+  <p>Be the first to upload a document.</p>
+  <br>
+  <a class="btn btn-primary" href="/upload">Upload your first file</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ f.title }} – DocShare{% endblock %}
+
+{% block content %}
+<div style="max-width:900px;margin:0 auto;">
+  <a href="/user/{{ f.username }}" style="color:var(--muted);font-size:.85rem;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem;margin-bottom:1.5rem;">← Back to {{ f.username }}</a>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+    {% if f.thumb_url %}
+      <img src="{{ f.thumb_url }}" style="width:100%;max-height:340px;object-fit:cover;display:block;" alt="{{ f.title }}">
+    {% else %}
+      <div style="width:100%;height:180px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a1a28,#22223a);font-size:5rem;opacity:.6;">
+        {% if f.file_type == 'pdf' %}📄{% else %}📊{% endif %}
+      </div>
+    {% endif %}
+
+    <div style="padding:2rem;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+        <div>
+          <span class="card-badge badge-{{ f.file_type }}" style="position:static;display:inline-block;margin-bottom:.75rem;">{{ f.file_type }}</span>
+          <h1 style="font-size:2rem;font-weight:800;line-height:1.2;">{{ f.title }}</h1>
+          <p style="color:var(--muted);font-family:var(--font-mono);font-size:.8rem;margin-top:.6rem;">
+            by <a href="/user/{{ f.username }}" style="color:var(--accent);text-decoration:none;">{{ f.username }}</a>
+            &nbsp;·&nbsp; {{ f.uploaded_at[:10] if f.uploaded_at else '' }}
+          </p>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.25rem;">
+          <a href="{{ f.file_url }}" target="_blank" rel="noopener" class="btn btn-ghost">View ↗</a>
+          <a href="{{ f.file_url }}" download class="btn btn-primary">↓ Download</a>
+          <a href="/file/{{ f.id }}/edit" class="btn btn-teal">✏ Edit</a>
+          <button class="btn btn-danger" onclick="confirmDelete('{{ f.id }}')">🗑 Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

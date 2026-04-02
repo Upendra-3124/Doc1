@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Not found – DocShare{% endblock %}
+{% block content %}
+<div class="empty">
+  <div class="empty-icon">👤</div>
+  <h3>User "{{ username }}" not found</h3>
+  <p>No files have been uploaded under this username yet.</p>
+  <br>
+  <a class="btn btn-primary" href="/upload">Upload as {{ username }}</a>
+</div>
+{% endblock %}

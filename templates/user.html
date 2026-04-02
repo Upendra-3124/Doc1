@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ username }}'s files – DocShare{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+  <span class="user-avatar" style="width:52px;height:52px;font-size:1.3rem;">{{ username[0].upper() }}</span>
+  <div>
+    <h1 style="font-size:1.8rem;font-weight:800;">{{ username }}</h1>
+    <p style="color:var(--muted);font-size:.9rem;">{{ files|length }} file{{ 's' if files|length != 1 }} shared</p>
+  </div>
+  <a href="/upload" class="btn btn-primary" style="margin-left:auto;">+ Upload</a>
+</div>
+
+<div class="cards-grid">
+  {% for f in files %}
+  <div class="file-card">
+    <div class="card-thumb" onclick="window.open('{{ f.file_url }}','_blank')">
+      {% if f.thumb_url %}
+        <img src="{{ f.thumb_url }}" alt="{{ f.title }}" loading="lazy">
+      {% else %}
+        <div class="card-thumb-placeholder">
+          <span class="file-type-icon">{% if f.file_type == 'pdf' %}📄{% else %}📊{% endif %}</span>
+        </div>
+      {% endif %}
+      <span class="card-badge badge-{{ f.file_type }}">{{ f.file_type }}</span>
+    </div>
+    <div class="card-body">
+      <div class="card-title">{{ f.title }}</div>
+      <div class="card-meta">{{ f.uploaded_at[:10] if f.uploaded_at else '' }}</div>
+      <div class="card-actions">
+        <a class="btn-card" href="{{ f.file_url }}" target="_blank" rel="noopener">View</a>
+        <a class="btn-card primary" href="{{ f.file_url }}" download>↓ Save</a>
+        <a class="btn-card edit" href="/file/{{ f.id }}/edit">✏ Edit</a>
+        <button class="btn-card del" onclick="confirmDelete('{{ f.id }}')">🗑 Delete</button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

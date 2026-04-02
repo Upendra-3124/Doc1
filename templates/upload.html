@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}DocShare – Upload{% endblock %}
+
+{% block extra_head %}
+<style>
+  .upload-wrap { max-width: 680px; margin: 0 auto; }
+  .page-heading { margin-bottom: 2rem; }
+  .page-heading h1 { font-size: 2.2rem; font-weight: 800; }
+  .page-heading h1 em { color: var(--accent); font-style: normal; }
+  .page-heading p { color: var(--muted); margin-top: .5rem; }
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 2.5rem; display: flex; flex-direction: column; gap: 1.75rem; }
+  .field { display: flex; flex-direction: column; gap: .5rem; }
+  .field label { font-size: .8rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .field input[type=text] { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: .75rem 1rem; color: var(--text); font-family: var(--font-ui); font-size: 1rem; outline: none; transition: border-color .2s; width: 100%; }
+  .field input[type=text]:focus { border-color: var(--accent); }
+  .dropzone { border: 2px dashed var(--border); border-radius: 10px; padding: 2.5rem; text-align: center; cursor: pointer; transition: border-color .2s, background .2s; position: relative; }
+  .dropzone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .dropzone:hover, .dropzone.drag-over { border-color: var(--accent); background: rgba(232,255,71,.04); }
+  .dropzone .dz-icon { font-size: 2.5rem; margin-bottom: .5rem; }
+  .dropzone p { color: var(--muted); font-size: .9rem; }
+  .dz-chosen { color: var(--accent); font-weight: 700; margin-top: .5rem; font-size: .9rem; display: none; }
+  .thumb-preview { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 8px; margin-top: .75rem; display: none; border: 1px solid var(--border); }
+  .btn-submit { width: 100%; padding: 1rem; background: var(--accent); color: #0a0a0f; border: none; border-radius: 999px; font-family: var(--font-ui); font-size: 1rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; cursor: pointer; transition: transform .15s, box-shadow .15s; display: flex; align-items: center; justify-content: center; gap: .5rem; }
+  .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(232,255,71,.3); }
+  .btn-submit:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+  .spinner { width: 18px; height: 18px; border: 2px solid #0a0a0f; border-top-color: transparent; border-radius: 50%; animation: spin .6s linear infinite; display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-list { background: rgba(255,107,107,.08); border: 1px solid rgba(255,107,107,.3); border-radius: 8px; padding: 1rem 1.25rem; display: none; }
+  .error-list li { color: var(--accent2); font-size: .9rem; margin-left: 1rem; margin-top: .3rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="upload-wrap">
+  <div class="page-heading">
+    <h1>Upload a <em>file</em></h1>
+    <p>Share a PDF or PowerPoint with the world — no login required.</p>
+  </div>
+
+  <div class="form-card">
+    <ul class="error-list" id="errorList"></ul>
+
+    <div class="field">
+      <label>Your Username</label>
+      <input id="username" type="text" placeholder="e.g. alice" autocomplete="off" spellcheck="false">
+    </div>
+
+    <div class="field">
+      <label>File Title</label>
+      <input id="title" type="text" placeholder="e.g. Q3 Sales Deck" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label>Document <span style="color:var(--muted);font-weight:400">(PDF / PPT / PPTX)</span></label>
+      <div class="dropzone" id="docZone">
+        <input type="file" id="docFile" accept=".pdf,.ppt,.pptx">
+        <div class="dz-icon">📄</div>
+        <p>Drag &amp; drop or <strong>click to browse</strong></p>
+        <div class="dz-chosen" id="docChosen"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Thumbnail <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+      <div class="dropzone" id="thumbZone">
+        <input type="file" id="thumbFile" accept="image/*">
+        <div class="dz-icon">🖼️</div>
+        <p>Drag &amp; drop or <strong>click to browse</strong></p>
+        <div class="dz-chosen" id="thumbChosen"></div>
+      </div>
+      <img id="thumbPreview" class="thumb-preview" alt="Thumbnail preview">
+    </div>
+
+    <button class="btn-submit" id="submitBtn" onclick="handleUpload()">
+      <span class="spinner" id="spinner"></span>
+      <span id="submitText">Upload File</span>
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  ['docZone','thumbZone'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('dragover',  e => { e.preventDefault(); el.classList.add('drag-over'); });
+    el.addEventListener('dragleave', ()  => el.classList.remove('drag-over'));
+    el.addEventListener('drop',      e => { e.preventDefault(); el.classList.remove('drag-over'); });
+  });
+
+  document.getElementById('docFile').addEventListener('change', function() {
+    const c = document.getElementById('docChosen');
+    if (this.files[0]) { c.textContent = '✓ ' + this.files[0].name; c.style.display = 'block'; }
+  });
+
+  document.getElementById('thumbFile').addEventListener('change', function() {
+    const c = document.getElementById('thumbChosen');
+    const p = document.getElementById('thumbPreview');
+    if (this.files[0]) {
+      c.textContent = '✓ ' + this.files[0].name; c.style.display = 'block';
+      const r = new FileReader();
+      r.onload = e => { p.src = e.target.result; p.style.display = 'block'; };
+      r.readAsDataURL(this.files[0]);
+    }
+  });
+
+  async function handleUpload() {
+    const btn = document.getElementById('submitBtn');
+    const spinner = document.getElementById('spinner');
+    const submitText = document.getElementById('submitText');
+    const errorList = document.getElementById('errorList');
+
+    errorList.style.display = 'none';
+    errorList.innerHTML = '';
+
+    const username  = document.getElementById('username').value.trim();
+    const title     = document.getElementById('title').value.trim();
+    const docFile   = document.getElementById('docFile').files[0];
+    const thumbFile = document.getElementById('thumbFile').files[0];
+
+    const errs = [];
+    if (!username) errs.push('Username is required.');
+    if (!title)    errs.push('Title is required.');
+    if (!docFile)  errs.push('Please select a PDF or PPT file.');
+
+    if (errs.length) {
+      errs.forEach(e => { const li = document.createElement('li'); li.textContent = e; errorList.appendChild(li); });
+      errorList.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    spinner.style.display = 'block';
+    submitText.textContent = 'Uploading…';
+
+    const fd = new FormData();
+    fd.append('username', username);
+    fd.append('title', title);
+    fd.append('document', docFile);
+    if (thumbFile) fd.append('thumbnail', thumbFile);
+
+    try {
+      const res  = await fetch('/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.ok) {
+        showToast('File uploaded successfully! 🎉', 'success');
+        setTimeout(() => window.location.href = data.redirect, 1200);
+      } else {
+        data.errors.forEach(e => { const li = document.createElement('li'); li.textContent = e; errorList.appendChild(li); });
+        errorList.style.display = 'block';
+        btn.disabled = false; spinner.style.display = 'none'; submitText.textContent = 'Upload File';
+      }
+    } catch(err) {
+      showToast('Network error. Please try again.', 'error');
+      btn.disabled = false; spinner.style.display = 'none'; submitText.textContent = 'Upload File';
+    }
+  }
+</script>
+{% endblock %}
