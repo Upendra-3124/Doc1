@@ -1,0 +1,8 @@
+# Secret keys - NEVER commit this
+.env
+
+__pycache__/
+*.pyc
+*.egg-info/
+venv/
+.venv/
